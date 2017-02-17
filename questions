@@ -1,0 +1,395 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 1. Python / Generator functions</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Следующая функция возвращает текущее и предыдущее значения в цикле:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def this_and_prev(iterable):\n",
+    "    iterator = iter(iterable)\n",
+    "    prev_item = None\n",
+    "    curr_item = next(iterator)\n",
+    "    for next_item in iterator:\n",
+    "        yield (prev_item, curr_item)\n",
+    "        prev_item = curr_item\n",
+    "        curr_item = next_item\n",
+    "    yield (prev_item, curr_item)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "None 0\n",
+      "0 1\n",
+      "1 2\n",
+      "2 3\n",
+      "3 4\n"
+     ]
+    }
+   ],
+   "source": [
+    "for i,j in this_and_prev( range(5) ): print i,j"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "По аналогии требуется написать функцию, которая будет возвращать текущее и следующее значения."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your code below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 2. SQL / Python</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Есть следующая SQL таблица <b>sample_table</b>:\n",
+    "<table>\n",
+    "<tr><td>column name</td><td><b>driver_id</b></td> <td><b>start_timestamp</b></td> <td><b>status</b></td></tr>\n",
+    "<tr><td>data type</td><td><i>(String)</i></td><td><i>(String)</i></td><td><i>(String)</i></td></tr>\n",
+    "<tr><td>1</td><td>driver_id_1</td><td>2017-01-21 00:05</td><td>driving</td></tr>\n",
+    "<tr><td>2</td><td>driver_id_1</td><td>2017-01-21 00:09</td><td>waiting</td></tr>\n",
+    "<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>\n",
+    "<tr><td>k x n</td><td>driver_id_n</td><td>2017-01-21 23:49</td><td>transporting</td></tr>\n",
+    "</table>\n",
+    "\n",
+    "* driver_id_i -- идентификатор i-го водителя\n",
+    "* start_timestamp -- время начала статуса, в котором находился водитель\n",
+    "* status -- статус, в котором находился водитель\n",
+    "\n",
+    "Для простоты предположим, что по каждому водителю в таблице одинаковое число записей k."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<hr>\n",
+    "Табличка хранится в СУБД, которая умеет применять к данным функции, написанные на Python. Например, следующий код выполняет функцию ROW_NUMBER():"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def row_number(driver_id, input_data):\n",
+    "    sorted_data = sorted(input_data, lambda x: x[0]) # сортируем список входных данных по дате\n",
+    "    result = []\n",
+    "    row_number = 0\n",
+    "    while row_number <= range( 0, len(input_data) ):\n",
+    "        row_data = {'row_number': row_number\n",
+    "                    , 'driver_id': driver_id\n",
+    "                    , 'start_timestamp': sorted_data[row_number][0]\n",
+    "                    , 'status': sorted_data[row_number][1]\n",
+    "                    }\n",
+    "        row_number += 1\n",
+    "        result.append(row_data)\n",
+    "    return result"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "$row_number = Python::row_number(driver_id, input_data);\n",
+    "\n",
+    "$raw = (\n",
+    "    SELECT \n",
+    "            driver_id\n",
+    "            , start_timestamp\n",
+    "            , status\n",
+    "    FROM    sample_table\n",
+    "    );\n",
+    "\n",
+    "$reduced = (\n",
+    "    REDUCE $raw\n",
+    "       ON  driver_id\n",
+    "    USING  $row_number((start_timestamp, status))\n",
+    "    );\n",
+    "\n",
+    "SELECT * FROM $reduced;"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<hr>\n",
+    "Результат выполненного запроса будет выглядеть как:\n",
+    "<table>\n",
+    "<tr><td>column name</td><td><b>row_number</b></td><td><b>driver_id</b></td> <td><b>start_timestamp</b></td> <td><b>status</b></td></tr>\n",
+    "<tr><td>data type</td><td><i>(Int32)</i></td><td><i>(String)</i></td><td><i>(String)</i></td><td><i>(String)</i></td></tr>\n",
+    "<tr><td>1</td><td>1</td><td>driver_id_1</td><td>2017-01-21 00:05</td><td>driving</td></tr>\n",
+    "<tr><td>2</td><td>2</td><td>driver_id_1</td><td>2017-01-21 00:09</td><td>waiting</td></tr>\n",
+    "<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>\n",
+    "<tr><td>k x n</td><td>k</td><td>driver_id_n</td><td>2017-01-21 23:49</td><td>transporting</td></tr>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<hr>\n",
+    "<b>Вопрос</b>: как нужно переписать код, чтобы реализовать функцию LEAD(), т.е. добавить запись следующего статуса водителя в соседней колонке? Для выполнения задания требуется переписать код."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your code below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 4. SQL</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Есть следующая таблица с заказами клиентов: "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<table>\n",
+    "<tr><td>column name</td><td><b>id</b></td> <td><b>client_id</b></td> <td><b>driver_id</b></td> <td><b>timestamp</b></td> <td><b>cost</b></td> <td><b>payment_type</b></td> <td><b>status</b></td></tr>\n",
+    "<tr><td>data type</td><td><i>(String)</i></td> <td><i>(String)</i></td> <td><i>(String)</i></td> <td><i>(String)</i></td> <td><i>(Double)</i></td> <td><i>(String)</i></td> <td><i>(String)</i></td> </tr>\n",
+    "<tr><td>1</td><td>some_id</td> <td>some_client_id</td> <td>some_driver_id</td> <td>2016-01-21 12:03</td> <td>123.0</td> <td>cash</td> <td>completed</td> </tr>\n",
+    "<tr><td>2</td><td>some_id</td> <td>some_client_id</td> <td>some_driver_id</td> <td>2016-01-21 11:42</td> <td>99.0</td> <td>card</td> <td>rider_canceled</td> </tr>\n",
+    "<tr><td>...</td><td>...</td> <td>...</td> <td>...</td> <td>...</td> <td>...</td> <td>...</td> <td>...</td> </tr>\n",
+    "<tr><td>n</td><td>some_id</td> <td>some_client_id</td> <td>some_driver_id</td> <td>2016-01-21 15:16</td> <td>0.0</td> <td>card</td> <td>driver_canceled</td> </tr>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Нужно посчитать следующие метрики:\n",
+    "    1. Как процент выполнения заказов зависит от типа оплаты?\n",
+    "    2. Какой процент активных водителей совершает в неделю более 30 поездок?\n",
+    "    3. Какой процент клиентов, совершивших первую поездку за наличные впоследствии переходит на оплату картой?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your answer below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 5. Algorithms</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Город порезан на \"квадраты\". В момент t возникает точка на карте в пределах выделенной зоны (большого квадрата). Определить в какой из малых квадратов она попадет можно, например, с помощью перебора (bruteforce), который в среднем будет решать задачу за линейное время. Какой более эффективный алгоритм можно предложить для решения данной задачи и за какое время он будет ее решать?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Для выполнения задания не требуется писать код, можно описать логику алгоритма в 5-10 предложениях."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<img src=\"http://i.imgsafe.org/6ba5c4e36a.png\" style=\"width:50%;\">"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your answer below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 6. A/B Testing</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Необходимо понять, как прохождение обучения работе с приложением влияет на конверсию водителей из заявки на сайте (лид) в первую поездку (начало работы). Среди 1200 лидов прошедших обучение первую поездку сделали 370, среди группы не прошедшей обучение поехали 1250 из 4500 водителей. Какое решение вы бы приняли и почему?\n",
+    "\n",
+    "Допустим, эксперимент показал, что конверсия выросла. Рассматривается возможность сделать обучение обязательным. Как это повлияет на показатели привлечения? Можно ли принимать это решение основываясь только на конверсии?\n",
+    "\n",
+    "Следующий шаг эксперимента - в дополнение к конверсии нужно сравнить выручку, которую приносит водитель за первый месяц работы. Как правильно рассчитать эту выручку? Допустим, в группе с обучением, средняя выручка составила 52к рублей, а в группе без обучения 49к. Как бы вы принимали это решение основываясь на выручке и конверсии? Какой KPI на ваш взгляд важнее и почему? Меняется ли что-то в статистическом подходе к сравнению при переходе от конверсии к выручке?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your answer below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h2>Problem 7. Efficiency</h2>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "В часы пик количество желающих воспользоваться такси резко возрастает и машин начинает не хватать. Для того чтобы обеспечить надежность сервиса в платформу заложен механизм балансировки спроса и предложения через динамическое ценообразование (surge pricing). \n",
+    "1. От чего должен зависеть повышающий коэффициент (surge) и почему? Предложите алгоритм управления surge коэффициентом. \n",
+    "2. Какие граничные условия вы бы предложили в качестве целевых (если коэффициент слишком низкий многие люди не могут уехать; если коэффициент слишком высокий - никто не хочет ехать)? \n",
+    "3. Какие метрики нужно отслеживать чтобы понять, что алгоритм А работает лучше чем алгоритм Б?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<i>Type your answer below</i>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [default]",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
